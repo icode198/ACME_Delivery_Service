@@ -7,12 +7,17 @@ appDiv.innerHTML = `<h1>JS Starter</h1>`;
 
 class Graph {
   constructor(graph) {
+    this.nodes = {};
     let edges = graph.replaceAll(' ', '').split(',');
-    this.adjs = {}; // adjacencies
     this.weights = {};
+    this.adjs = {}; // adjacencies
     for (let edge of edges) {
       let from = edge[0];
       let to = edge[1];
+
+      this.nodes[from] = 0;
+      this.nodes[to] = 0;
+
       let weight = Number(edge.slice(2));
 
       if (this.adjs[from] === undefined) {
@@ -37,20 +42,26 @@ class Graph {
   }
 
   DFS(from, to, visited, path) {
-    if (from === to) {
+    visited[from]++;
+
+    if (path.length > 1 && from === to) {
       this.routes.push(path.join(''));
+      // console.log(visited);
       return;
     }
 
-    visited[from]++;
     for (let adj of this.adjs[from]) {
       if (visited[adj] < this.sameRouteMax) {
-        this.DFS(adj, to, visited, [...path, adj]);
+        this.DFS(adj, to, { ...visited }, [...path, adj]);
       }
     }
   }
 
   getDeliveryRoutes(from, to, stopsMax = Infinity, sameRouteMax = 1) {
+    if (this.nodes[from] === undefined || this.nodes[to] === undefined) {
+      return [];
+    }
+
     this.from = from;
     this.to = to;
     this.stopsMax = stopsMax;
@@ -58,28 +69,38 @@ class Graph {
 
     this.routes = []; // possible delivery routes
 
-    // init visited
-    let visited = {};
-    for (let i = 0; i < 26; i++) {
-      visited[String.fromCharCode('A'.charCodeAt(0) + i)] = 0;
-    }
-
-    this.DFS(from, to, visited, [from]);
-
-    console.log(visited);
+    this.DFS(from, to, { ...this.nodes }, [from]);
 
     return this.routes;
+  }
+
+  getCostOfCheapestDeliveryRoute() {
+    let min = Infinity;
+    let cheapestRoute = '';
+    for (let route of this.routes) {
+      let cost = this.getDeliveryCostOfRoute(route);
+      if (cost < min) {
+        min = cost;
+        cheapestRoute = route;
+      }
+    }
+    // console.log(cheapestRoute);
+    return min;
   }
 }
 
 let graph = new Graph('AB1, AC4, AD10, BE3, CD4, CF2, DE1, EB3, EA2, FD1');
 
-console.log(graph.adjs);
-console.log(graph.weights);
+// console.log(graph.adjs);
+// console.log(graph.weights);
 
 console.log(graph.getDeliveryCostOfRoute('A-B-E'));
 console.log(graph.getDeliveryCostOfRoute('A-D'));
 console.log(graph.getDeliveryCostOfRoute('EACF'));
 console.log(graph.getDeliveryCostOfRoute('ADF'));
 
-console.log(graph.getDeliveryRoutes('E', 'D'));
+console.log(graph.getDeliveryRoutes('E', 'D', 4, 1).length);
+console.log(graph.getCostOfCheapestDeliveryRoute());
+
+console.log(graph.getDeliveryRoutes('E', 'E', 4, 2).length);
+console.log(graph.getCostOfCheapestDeliveryRoute());
