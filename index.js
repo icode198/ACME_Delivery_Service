@@ -44,10 +44,11 @@ class Graph {
   DFS(from, to, visited, path) {
     visited[from]++;
 
-    if (path.length > 1 && from === to) {
-      this.routes.push(path.join(''));
+    if (from === to) {
+      if (path.length > 1 && path.length - 1 <= this.stopsMax)
+        this.routes.push(path.join(''));
       // console.log(visited);
-      return;
+      if (visited[to] >= this.sameRouteMax) return;
     }
 
     for (let adj of this.adjs[from]) {
@@ -58,7 +59,12 @@ class Graph {
   }
 
   getDeliveryRoutes(from, to, stopsMax = Infinity, sameRouteMax = 1) {
-    if (this.nodes[from] === undefined || this.nodes[to] === undefined) {
+    if (
+      this.nodes[from] === undefined ||
+      this.nodes[to] === undefined ||
+      stopsMax < 1 ||
+      sameRouteMax < 1
+    ) {
       return [];
     }
 
@@ -87,6 +93,17 @@ class Graph {
     // console.log(cheapestRoute);
     return min;
   }
+
+  printAllRoutes(costLimit) {
+    let cnt = 0;
+    for (let route of this.routes) {
+      if (this.getDeliveryCostOfRoute(route) < costLimit) {
+        console.log(route);
+        cnt++;
+      }
+    }
+    return cnt;
+  }
 }
 
 let graph = new Graph('AB1, AC4, AD10, BE3, CD4, CF2, DE1, EB3, EA2, FD1');
@@ -98,9 +115,19 @@ console.log(graph.getDeliveryCostOfRoute('A-B-E'));
 console.log(graph.getDeliveryCostOfRoute('A-D'));
 console.log(graph.getDeliveryCostOfRoute('EACF'));
 console.log(graph.getDeliveryCostOfRoute('ADF'));
+console.log('');
 
 console.log(graph.getDeliveryRoutes('E', 'D', 4, 1).length);
 console.log(graph.getCostOfCheapestDeliveryRoute());
+console.log('');
+
+graph.getDeliveryRoutes('E', 'D', 3, 1);
+console.log('number of routes:', graph.printAllRoutes(20));
+console.log('');
 
 console.log(graph.getDeliveryRoutes('E', 'E', 4, 2).length);
 console.log(graph.getCostOfCheapestDeliveryRoute());
+console.log('');
+
+graph.getDeliveryRoutes('E', 'E', Infinity, 3);
+console.log('number of routes:', graph.printAllRoutes(20));
